@@ -34,12 +34,16 @@ def cargen(env, pumps, lines):
 #process to run cars through carwash
 def car(env, number, pumps, line):
     print("%d arrives at gas station at %d" % (number, env.now))
+    #have the car grab a spot in line
     myLine = line.request()
     yield myLine
+
+    #grab an open pump and release the top spot in line
     myPump = pumps.request()
     yield myPump
     line.release(myLine)
-    t = random.lognormvariate(5,0.5)+1.5
+    #wait for a random amount of time determined by a log normal distribution of mean=5, shape=0.5, and scale of 1.5 to release the pump
+    t = random.lognormvariate(5,0.5)*1.5
     yield env.timeout(t)
     pumps.release(myPump)
     print("%d leaves at gas station at %d" % (number, env.now))
@@ -74,5 +78,5 @@ pumps = [pump1,pump2]
 #setup the process
 env.process(cargen(env, pumps, lines))
 
-#run the sim
+#run the sim for 1020 time units
 env.run(until = 1020)
