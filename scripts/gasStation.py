@@ -24,7 +24,7 @@ def cargen(env, pumps, lines):
         pump = random.randrange(0,2,1)
         line = random.randrange(0,2,1)
         t = random.expovariate(1.0/5)
-        print(pump,line,t)
+        #print(pump,line,t)
         yield env.timeout(t)
         #make and run a new car
         c = car(env, number, pumps[pump], lines[line])
