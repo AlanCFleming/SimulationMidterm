@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+import random
 import simpy
 import numpy
 
@@ -9,28 +10,53 @@ import numpy
 #Description: This is a script to simulate a 2 line 2 pump gas station. 
 #Asummuptions: every simulation time represent 1 minute and the simulation will run for 1020 simulation time units.
 #              The customer will grab either of the slots in their line if they are open. IE, if the second pump in line has a car and the first doesnt, waiting cars will drive around to the car to access the open pump.
-#              Each new customer will join the opposite line than the last.
-#              Phyisical pumps 1 and 2 will be split into pump1, pump2, pump3, and pump4 to represent dual sided pumps.
-#              Pump1 and pump3 are the sides of one pump while pump2 and pump4 are the sides of the other.
+#              Each new customer will join a random line when they arrive.
+#              pump1 represents the pumps for one line, pump2 the other
 ###########################################
 
 
 #process to make cars
-def cargen(env, pump1, pump2, pump3, pump4, line1, line2):
+def cargen(env, pumps, lines):
     print("starting gen")
-    yield env.timeout(1)
-    c = car(env, 0, pump1, pump2, line1)
-    env.process(c)
+    number = 0
+    while(True):
+        #select pump, line, and wait for a new car
+        pump = random.randrange(0,2,1)
+        line = random.randrange(0,2,1)
+        t = random.expovariate(1.0/5)
+        print(pump,line,t)
+        yield env.timeout(t)
+        #make and run a new car
+        c = car(env, number, pumps[pump], lines[line])
+        env.process(c)
+        number = number+1
 
 #process to run cars through carwash
-def car(env, number, pump1, pump2, line):
+def car(env, number, pumps, line):
     print("%d arrives at gas station at %d" % (number, env.now))
-    yield env.timeout(1)
+    myLine = line.request()
+    yield myLine
+    myPump = pumps.request()
+    yield myPump
+    line.release(myLine)
+    t = random.lognormvariate(5,0.5)+1.5
+    yield env.timeout(t)
+    pumps.release(myPump)
+    print("%d leaves at gas station at %d" % (number, env.now))
+
+
+
 
 
 
 #seed the random number
-numpy.random.seed(2020)
+random.seed(2019)
+
+
+##reminders for random numbers
+#arival random number => random.expovariate(1.0/mean)
+#pump random number => random.lognormvariate(mean,shape)*scale
+
 ##settup and run the simpulation
 
 #make the enviroment
@@ -39,13 +65,14 @@ env = simpy.Environment()
 #setup the resources
 line1 = simpy.Resource(env,capacity=1)
 line2 = simpy.Resource(env,capacity=1)
-pump1 = simpy.Resource(env,capacity=1)
-pump2 = simpy.Resource(env,capacity=1)
-pump3 = simpy.Resource(env,capacity=1)
-pump4 = simpy.Resource(env,capacity=1)
+lines = [line1,line2]
+
+pump1 = simpy.Resource(env,capacity=2)
+pump2 = simpy.Resource(env,capacity=2)
+pumps = [pump1,pump2]
 
 #setup the process
-env.process(cargen(env, pump1, pump2, pump3, pump4, line1, line2))
+env.process(cargen(env, pumps, lines))
 
 #run the sim
-env.run()
+env.run(until = 1020)
