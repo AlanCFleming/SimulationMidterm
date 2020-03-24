@@ -9,32 +9,32 @@ import numpy
 #Email: alanfleming1998@gmail.com
 #Description: This is a script to simulate a 2 line 2 pump gas station. 
 #Asummuptions: every simulation time represent 1 minute and the simulation will run for 1020 simulation time units.
-#              The customer will grab either of the slots in their line if they are open. IE, if the second pump in line has a car and the first doesnt, waiting cars will drive around to the car to access the open pump.
+#              The customer will grab either of the slots in their line if they are open. IE, if the second pump in line has a customer and the first doesnt, waiting customers will drive around to the customer to access the open pump.
 #              Each new customer will join a random line when they arrive.
 #              pump1 represents the pumps for one line, pump2 the other
 ###########################################
 
 
-#process to make cars
-def cargen(env, pumps, lines):
+#process to make customers
+def customergen(env, pumps, lines):
     print("starting gen")
     number = 0
     while(True):
-        #select pump, line, and wait for a new car
+        #select pump, line, and wait for a new customer
         pump = random.randrange(0,2,1)
         line = random.randrange(0,2,1)
         t = random.expovariate(1.0/5)
         #print(pump,line,t)
         yield env.timeout(t)
-        #make and run a new car
-        c = car(env, number, pumps[pump], lines[line])
+        #make and run a new customer
+        c = customer(env, number, pumps[pump], lines[line])
         env.process(c)
         number = number+1
 
-#process to run cars through carwash
-def car(env, number, pumps, line):
+#process to run customers through customerwash
+def customer(env, number, pumps, line):
     print("%d arrives at gas station at %d" % (number, env.now))
-    #have the car grab a spot in line
+    #have the customer grab a spot in line
     myLine = line.request()
     yield myLine
 
@@ -42,6 +42,7 @@ def car(env, number, pumps, line):
     myPump = pumps.request()
     yield myPump
     line.release(myLine)
+    print("%d left the line and grabbed an open pump at %d" % (number, env.now))
     #wait for a random amount of time determined by a log normal distribution of mean=5, shape=0.5, and scale of 1.5 to release the pump
     t = random.lognormvariate(1.5,0.5)
     yield env.timeout(t)
@@ -76,7 +77,7 @@ pump2 = simpy.Resource(env,capacity=2)
 pumps = [pump1,pump2]
 
 #setup the process
-env.process(cargen(env, pumps, lines))
+env.process(customergen(env, pumps, lines))
 
 #run the sim for 1020 time units
 env.run(until = 1020)
