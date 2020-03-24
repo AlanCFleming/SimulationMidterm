@@ -43,7 +43,7 @@ def car(env, number, pumps, line):
     yield myPump
     line.release(myLine)
     #wait for a random amount of time determined by a log normal distribution of mean=5, shape=0.5, and scale of 1.5 to release the pump
-    t = random.lognormvariate(5,0.5)*1.5
+    t = random.lognormvariate(1.5,0.5)
     yield env.timeout(t)
     pumps.release(myPump)
     print("%d leaves at gas station at %d" % (number, env.now))
@@ -59,7 +59,7 @@ random.seed(2019)
 
 ##reminders for random numbers
 #arival random number => random.expovariate(1.0/mean)
-#pump random number => random.lognormvariate(mean,shape)*scale
+#pump random number => random.lognormvariate(scale,shape)
 
 ##settup and run the simpulation
 
